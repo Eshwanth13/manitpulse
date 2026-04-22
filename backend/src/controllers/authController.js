@@ -76,16 +76,26 @@ exports.verifyMagicLink = async (req, res) => {
     if (!verificationDoc) {
       return res.status(400).json({
         success: false,
-        message: 'This magic link is invalid or has expired (15-minute limit).',
+        message: 'This magic link is invalid or has already been used.',
+      });
+    }
+
+    // Explicit 15-minute expiry check (safety net — MongoDB TTL runs every ~60s)
+    const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
+    const tokenAge = Date.now() - new Date(verificationDoc.createdAt).getTime();
+    if (tokenAge > FIFTEEN_MINUTES_MS) {
+      await VerificationToken.deleteOne({ _id: verificationDoc._id });
+      return res.status(400).json({
+        success: false,
+        message: 'This magic link has expired. Please request a new one.',
       });
     }
 
     // Compute hash BEFORE deleting (email gets deleted next)
     const emailHash = hashEmail(verificationDoc.email);
 
-    // TESTING PHASE: Do NOT delete the verification token immediately
-    // This allows clicking the magic link multiple times within its TTL window (15 mins)
-    // In production, we'd delete it: await VerificationToken.deleteOne({ _id: verificationDoc._id });
+    // Delete the token immediately after use — one-time use only
+    await VerificationToken.deleteOne({ _id: verificationDoc._id });
 
     // Check if this student has verified before
     const existingUser = await AnonymousUser.findOne({ emailHash });
@@ -120,3 +130,4 @@ exports.verifyMagicLink = async (req, res) => {
     });
   }
 };
+

@@ -8,7 +8,11 @@ const {
 const { adminAuth } = require('../middleware/authMiddleware');
 const router = express.Router();
 
-// ALL admin routes require Authorization: Bearer <ADMIN_SECRET_KEY>
+// Download route is PUBLIC (browser <a> tag can't send headers)
+// Auth is handled inside the controller via ?key= query param
+router.get('/reports/download/:id', downloadReport);
+
+// ALL other admin routes require Authorization: Bearer <ADMIN_SECRET_KEY>
 router.use(adminAuth);
 
 // Posts — all statuses (approved, rejected, deleted)
@@ -17,8 +21,7 @@ router.get('/posts', getAdminPosts);
 // Stats for dashboard
 router.get('/stats', getAdminStats);
 
-// Report generation and download
+// Report generation
 router.post('/reports/generate', generateReport);
-router.get('/reports/download/:id', downloadReport);
 
 module.exports = router;

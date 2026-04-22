@@ -32,7 +32,7 @@ const AdminDashboard = () => {
   const [generatingReport, setGeneratingReport] = useState(false);
   const [reportUrl, setReportUrl] = useState(null);
 
-  const { getAdminHeaders, logoutAdmin } = useAuth();
+  const { getAdminHeaders, logoutAdmin, adminKey } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -75,7 +75,8 @@ const AdminDashboard = () => {
     try {
       const res = await axios.post(`${API}/admin/reports/generate`, {}, { headers: getAdminHeaders() });
       if (res.data.success) {
-        setReportUrl(`${API.replace('/api', '')}${res.data.downloadUrl}`);
+        // Append the admin key as a query param so the browser download link is authorized
+        setReportUrl(`${API.replace('/api', '')}${res.data.downloadUrl}?key=${adminKey}`);
       }
     } catch (err) {
       alert('Report generation failed: ' + (err.response?.data?.message || err.message));
@@ -83,6 +84,7 @@ const AdminDashboard = () => {
       setGeneratingReport(false);
     }
   };
+
 
   // Chart data
   const sentimentPieData = stats?.sentimentBreakdown

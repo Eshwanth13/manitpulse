@@ -243,9 +243,16 @@ exports.generateReport = async (req, res) => {
 };
 
 // ─── GET /api/admin/reports/download/:id ─────────────────────────────────────
+// Auth via ?key= query param (browser <a download> can't send headers)
 exports.downloadReport = (req, res) => {
   try {
-    const { id } = req.params;
+    const { id, key } = req.params.id ? { id: req.params.id, key: req.query.key } : {};
+
+    // Verify the admin key from query param
+    if (!key || key !== process.env.ADMIN_SECRET_KEY) {
+      return res.status(401).json({ success: false, message: 'Admin access denied.' });
+    }
+
     // Sanitize ID to prevent path traversal
     const safeId = id.replace(/[^a-zA-Z0-9_-]/g, '');
     const filePath = path.join(__dirname, '../../reports', `${safeId}.pdf`);
@@ -262,3 +269,4 @@ exports.downloadReport = (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error.' });
   }
 };
+

@@ -19,7 +19,9 @@ const sendMagicLink = async (email, token) => {
   // MAGIC_LINK_BASE_URL points to the FRONTEND /auth/callback page.
   // The frontend then calls GET /api/auth/verify?token=... via axios.
   // This prevents email client URL-scanners from consuming the token prematurely.
-  const url = `${process.env.MAGIC_LINK_BASE_URL}?token=${token}`;
+  const baseUrl = process.env.MAGIC_LINK_BASE_URL || `${process.env.FRONTEND_URL}/auth/callback`;
+  const url = `${baseUrl}?token=${token}`;
+
 
   const mailOptions = {
     from: `"CampusVani AI" <${process.env.EMAIL_USER}>`,
